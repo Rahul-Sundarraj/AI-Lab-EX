@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Algorithms Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .back-home {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+
+        .back-home:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-5px);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 0;
+        }
+
+        .control-panel {
+            background: #f8f9fa;
+            padding: 30px;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+            max-height: 800px;
+        }
+
+        .control-panel h2 {
+            margin-bottom: 25px;
+            color: #667eea;
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 0.95em;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        select {
+            background: white;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+            font-size: 1.1em;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .algo-info {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .algo-info h4 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+
+        .algo-info p {
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .results-container {
+            padding: 30px;
+        }
+
+        .map-container {
+            position: relative;
+            height: 600px;
+            background: linear-gradient(to bottom, #f0f4ff 0%, #e8efff 100%);
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        #map-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .node {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .node-circle {
+            fill: #94a3b8;
+            stroke: #475569;
+            stroke-width: 2;
+            transition: all 0.3s ease;
+        }
+
+        .node:hover .node-circle {
+            stroke-width: 3;
+            filter: drop-shadow(0 0 5px rgba(0,0,0,0.3));
+        }
+
+        .node-text {
+            fill: #1e293b;
+            font-size: 11px;
+            font-weight: 600;
+            pointer-events: none;
+            text-shadow: 
+                -1px -1px 0 #fff,
+                1px -1px 0 #fff,
+                -1px 1px 0 #fff,
+                1px 1px 0 #fff,
+                0 0 3px #fff;
+        }
+
+        .edge {
+            stroke: #cbd5e1;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .node-start .node-circle {
+            fill: #10b981;
+            stroke: #059669;
+            stroke-width: 3;
+        }
+
+        .node-goal .node-circle {
+            fill: #ef4444;
+            stroke: #dc2626;
+            stroke-width: 3;
+        }
+
+        .node-exploring .node-circle {
+            fill: #fbbf24;
+            stroke: #f59e0b;
+            animation: blinkExplore 0.6s ease-in-out;
+        }
+
+        .node-explored .node-circle {
+            fill: #fb923c;
+            stroke: #f97316;
+        }
+
+        .node-path .node-circle {
+            fill: #8b5cf6;
+            stroke: #7c3aed;
+            stroke-width: 3;
+        }
+
+        .edge-path {
+            stroke: #8b5cf6;
+            stroke-width: 4;
+            opacity: 0;
+            animation: drawPath 0.5s ease-out forwards;
+        }
+
+        @keyframes explore {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.3);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes drawPath {
+            from {
+                opacity: 0;
+                stroke-dasharray: 1000;
+                stroke-dashoffset: 1000;
+            }
+            to {
+                opacity: 1;
+                stroke-dasharray: 1000;
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .legend-title {
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #1e293b;
+            font-size: 0.95em;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 0.85em;
+            color: #475569;
+        }
+
+        .legend-color {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid #334155;
+        }
+
+        .result-info {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border-left: 5px solid #667eea;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-info h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .result-item {
+            margin: 10px 0;
+            font-size: 0.95em;
+            color: #475569;
+        }
+
+        .result-item strong {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .path-display {
+            background: white;
+            padding: 18px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border: 2px solid #e0e7ff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .path-display strong {
+            color: #667eea;
+            font-size: 1em;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .path-step {
+            display: inline-block;
+            background: #f8fafc;
+            padding: 6px 12px;
+            margin: 4px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.9em;
+            color: #334155;
+            font-weight: 500;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #667eea;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+
+        .loading::after {
+            content: '';
+            display: block;
+            width: 40px;
+            height: 40px;
+            margin: 20px auto;
+            border: 4px solid #e0e7ff;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .exploration-order {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .explored-node {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            color: #92400e;
+            font-weight: 500;
+            border: 1px solid #fbbf24;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-panel {
+                border-right: none;
+                border-bottom: 1px solid #dee2e6;
+                max-height: none;
+            }
+
+            .map-container {
+                height: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .back-home {
+                position: static;
+                display: inline-block;
+                margin-bottom: 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .header p {
+                font-size: 1em;
+            }
+
+            .map-container {
+                height: 400px;
+            }
+
+            .legend {
+                bottom: 10px;
+                right: 10px;
+                padding: 12px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-home">← Back to Hub</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🗺️ Pathfinding Algorithms</h1>
+            <p>Visualize and compare search algorithms on Tamil Nadu district map</p>
+        </div>
+
+        <div class="main-content">
+            <div class="control-panel">
+                <h2>Configuration</h2>
+                
+                <div class="form-group">
+                    <label for="algorithm">Search Algorithm</label>
+                    <select id="algorithm">
+                        <option value="bfs">BFS - Breadth First Search</option>
+                        <option value="dfs">DFS - Depth First Search</option>
+                        <option value="ucs">UCS - Uniform Cost Search</option>
+                        <option value="depth_limited">Depth Limited Search</option>
+                        <option value="iterative_deepening">Iterative Deepening</option>
+                        <option value="greedy">Greedy Best-First Search</option>
+                        <option value="a_star">A* Search Algorithm</option>
+                        <option value="ao_star">AO* Algorithm</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="start">Start District</label>
+                    <select id="start"></select>
+                </div>
+
+                <div class="form-group">
+                    <label for="goal">Goal District</label>
+                    <select id="goal"></select>
+                </div>
+
+                <button class="search-btn" onclick="executeSearch()">
+                    🔍 Find Path
+                </button>
+
+                <div id="algoInfo" class="algo-info">
+                    <h4>Algorithm Info</h4>
+                    <p id="algoDescription"></p>
+                </div>
+            </div>
+
+            <div class="results-container">
+                <div class="map-container">
+                    <svg id="map-svg"></svg>
+                    <div class="legend">
+                        <div class="legend-title">Legend</div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #10b981; border-color: #059669;"></div>
+                            <span>Start</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ef4444; border-color: #dc2626;"></div>
+                            <span>Goal</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #fb923c; border-color: #f97316;"></div>
+                            <span>Explored</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #8b5cf6; border-color: #7c3aed;"></div>
+                            <span>Path</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #94a3b8; border-color: #475569;"></div>
+                            <span>Unvisited</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="results-section"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const districts = {
+            'Chennai': {'coords': [13.0827, 80.2707], 'neighbors': ['Kanchipuram', 'Tiruvallur', 'Chengalpattu']},
+            'Kanchipuram': {'coords': [12.8342, 79.7036], 'neighbors': ['Chennai', 'Vellore', 'Tiruvannamalai', 'Chengalpattu']},
+            'Tiruvallur': {'coords': [13.1067, 79.9078], 'neighbors': ['Chennai', 'Vellore', 'Ranipet']},
+            'Chengalpattu': {'coords': [12.6919, 79.9758], 'neighbors': ['Chennai', 'Kanchipuram', 'Villupuram']},
+            'Vellore': {'coords': [12.9165, 79.1325], 'neighbors': ['Tiruvallur', 'Kanchipuram', 'Tiruvannamalai', 'Ranipet']},
+            'Ranipet': {'coords': [12.9249, 79.3308], 'neighbors': ['Tiruvallur', 'Vellore', 'Tirupattur']},
+            'Tirupattur': {'coords': [12.4962, 78.5726], 'neighbors': ['Ranipet', 'Krishnagiri', 'Dharmapuri']},
+            'Tiruvannamalai': {'coords': [12.2253, 79.0747], 'neighbors': ['Kanchipuram', 'Vellore', 'Villupuram', 'Kallakurichi']},
+            'Villupuram': {'coords': [11.9401, 79.4861], 'neighbors': ['Chengalpattu', 'Tiruvannamalai', 'Kallakurichi', 'Cuddalore']},
+            'Kallakurichi': {'coords': [11.7401, 78.9597], 'neighbors': ['Tiruvannamalai', 'Villupuram', 'Salem']},
+            'Cuddalore': {'coords': [11.7480, 79.7714], 'neighbors': ['Villupuram', 'Ariyalur', 'Perambalur']},
+            'Salem': {'coords': [11.6643, 78.1460], 'neighbors': ['Kallakurichi', 'Dharmapuri', 'Namakkal', 'Erode']},
+            'Dharmapuri': {'coords': [12.1211, 78.1582], 'neighbors': ['Tirupattur', 'Krishnagiri', 'Salem']},
+            'Krishnagiri': {'coords': [12.5186, 78.2137], 'neighbors': ['Tirupattur', 'Dharmapuri']},
+            'Namakkal': {'coords': [11.2189, 78.1677], 'neighbors': ['Salem', 'Erode', 'Karur', 'Tiruchirappalli']},
+            'Erode': {'coords': [11.3410, 77.7172], 'neighbors': ['Salem', 'Namakkal', 'Coimbatore', 'Tiruppur']},
+            'Coimbatore': {'coords': [11.0168, 76.9558], 'neighbors': ['Erode', 'Tiruppur', 'Nilgiris', 'Dindigul']},
+            'Tiruppur': {'coords': [11.1075, 77.3398], 'neighbors': ['Erode', 'Coimbatore', 'Karur']},
+            'Nilgiris': {'coords': [11.4102, 76.6950], 'neighbors': ['Coimbatore']},
+            'Karur': {'coords': [10.9571, 78.0766], 'neighbors': ['Namakkal', 'Tiruppur', 'Dindigul', 'Tiruchirappalli']},
+            'Tiruchirappalli': {'coords': [10.7905, 78.7047], 'neighbors': ['Namakkal', 'Karur', 'Perambalur', 'Ariyalur', 'Thanjavur', 'Pudukkottai']},
+            'Perambalur': {'coords': [11.2320, 78.8801], 'neighbors': ['Cuddalore', 'Ariyalur', 'Tiruchirappalli']},
+            'Ariyalur': {'coords': [11.1401, 79.0770], 'neighbors': ['Cuddalore', 'Perambalur', 'Tiruchirappalli']},
+            'Thanjavur': {'coords': [10.7870, 79.1378], 'neighbors': ['Tiruchirappalli', 'Nagapattinam', 'Tiruvarur', 'Pudukkottai']},
+            'Nagapattinam': {'coords': [10.7658, 79.8448], 'neighbors': ['Thanjavur', 'Tiruvarur']},
+            'Tiruvarur': {'coords': [10.7727, 79.6345], 'neighbors': ['Thanjavur', 'Nagapattinam', 'Mayiladuthurai']},
+            'Mayiladuthurai': {'coords': [11.1025, 79.6519], 'neighbors': ['Tiruvarur', 'Cuddalore']},
+            'Pudukkottai': {'coords': [10.3833, 78.8200], 'neighbors': ['Tiruchirappalli', 'Thanjavur', 'Sivaganga']},
+            'Dindigul': {'coords': [10.3673, 77.9803], 'neighbors': ['Coimbatore', 'Karur', 'Madurai', 'Theni']},
+            'Madurai': {'coords': [9.9252, 78.1198], 'neighbors': ['Dindigul', 'Theni', 'Virudhunagar', 'Sivaganga']},
+            'Theni': {'coords': [10.0104, 77.4777], 'neighbors': ['Dindigul', 'Madurai']},
+            'Sivaganga': {'coords': [9.8438, 78.4809], 'neighbors': ['Pudukkottai', 'Madurai', 'Ramanathapuram']},
+            'Virudhunagar': {'coords': [9.5810, 77.9624], 'neighbors': ['Madurai', 'Tenkasi', 'Ramanathapuram']},
+            'Ramanathapuram': {'coords': [9.3639, 78.8377], 'neighbors': ['Sivaganga', 'Virudhunagar', 'Thoothukudi']},
+            'Tenkasi': {'coords': [8.9604, 77.3152], 'neighbors': ['Virudhunagar', 'Tirunelveli']},
+            'Tirunelveli': {'coords': [8.7139, 77.7567], 'neighbors': ['Tenkasi', 'Thoothukudi', 'Kanyakumari']},
+            'Thoothukudi': {'coords': [8.7642, 78.1348], 'neighbors': ['Ramanathapuram', 'Tirunelveli']},
+            'Kanyakumari': {'coords': [8.0883, 77.5385], 'neighbors': ['Tirunelveli']}
+        };
+
+        let animationTimeouts = [];
+        let currentAnimation = null;
+
+        const algoDescriptions = {
+            'bfs': 'Explores all neighbors at current depth before moving deeper. Guarantees shortest path in unweighted graphs.',
+            'dfs': 'Explores as far as possible along branches before backtracking. Memory efficient but may not find shortest path.',
+            'ucs': 'Expands nodes in order of their path cost from start. Optimal for weighted graphs.',
+            'depth_limited': 'DFS with maximum depth of 5 levels. Prevents infinite loops in deep graphs.',
+            'iterative_deepening': 'Repeatedly performs depth-limited search with increasing limits. Combines DFS space efficiency with BFS completeness.',
+            'greedy': 'Always expands node that appears closest to goal. Fast but not guaranteed to be optimal.',
+            'a_star': 'Uses both actual cost and estimated remaining cost. Optimal and efficient with good heuristic.',
+            'ao_star': 'AND-OR graph search for problem decomposition. Useful for planning and game trees.'
+        };
+
+        function populateDistricts() {
+            const startSelect = document.getElementById('start');
+            const goalSelect = document.getElementById('goal');
+            
+            const districtNames = Object.keys(districts).sort();
+            
+            districtNames.forEach(name => {
+                startSelect.add(new Option(name, name));
+                goalSelect.add(new Option(name, name));
+            });
+
+            startSelect.value = 'Chennai';
+            goalSelect.value = 'Kanyakumari';
+        }
+
+        function drawMap() {
+            const svg = document.getElementById('map-svg');
+            svg.innerHTML = '';
+
+            const width = svg.clientWidth;
+            const height = svg.clientHeight;
+
+            let minLat = Infinity, maxLat = -Infinity;
+            let minLon = Infinity, maxLon = -Infinity;
+
+            Object.values(districts).forEach(d => {
+                const [lat, lon] = d.coords;
+                minLat = Math.min(minLat, lat);
+                maxLat = Math.max(maxLat, lat);
+                minLon = Math.min(minLon, lon);
+                maxLon = Math.max(maxLon, lon);
+            });
+
+            const padding = 50;
+            const scaleX = (width - 2 * padding) / (maxLon - minLon);
+            const scaleY = (height - 2 * padding) / (maxLat - minLat);
+
+            window.project = function(lat, lon) {
+                const x = (lon - minLon) * scaleX + padding;
+                const y = height - ((lat - minLat) * scaleY + padding);
+                return [x, y];
+            };
+
+            // Draw edges
+            const edgesDrawn = new Set();
+            Object.entries(districts).forEach(([name, data]) => {
+                const [x1, y1] = project(...data.coords);
+                data.neighbors.forEach(neighbor => {
+                    const edgeKey = [name, neighbor].sort().join('-');
+                    if (!edgesDrawn.has(edgeKey)) {
+                        edgesDrawn.add(edgeKey);
+                        const [x2, y2] = project(...districts[neighbor].coords);
+                        
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', x1);
+                        line.setAttribute('y1', y1);
+                        line.setAttribute('x2', x2);
+                        line.setAttribute('y2', y2);
+                        line.setAttribute('class', 'edge');
+                        svg.appendChild(line);
+                    }
+                });
+            });
+
+            // Draw nodes
+            Object.entries(districts).forEach(([name, data]) => {
+                const [x, y] = project(...data.coords);
+                
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.setAttribute('class', 'node');
+                g.setAttribute('data-district', name);
+                
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', x);
+                circle.setAttribute('cy', y);
+                circle.setAttribute('r', 6);
+                circle.setAttribute('class', 'node-circle');
+                
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', x);
+                text.setAttribute('y', y - 12);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('class', 'node-text');
+                text.textContent = name;
+                
+                g.appendChild(circle);
+                g.appendChild(text);
+                svg.appendChild(g);
+            });
+        }
+
+        function clearAnimation() {
+            animationTimeouts.forEach(timeout => clearTimeout(timeout));
+            animationTimeouts = [];
+            if (currentAnimation) {
+                cancelAnimationFrame(currentAnimation);
+                currentAnimation = null;
+            }
+        }
+
+        function markNode(nodeName, className) {
+            const svg = document.getElementById('map-svg');
+            const nodeGroup = svg.querySelector(`[data-district="${nodeName}"]`);
+            if (nodeGroup) {
+                nodeGroup.className.baseVal = 'node ' + className;
+            }
+        }
+
+        function animateSearch(exploredNodes, pathNodes, start, goal) {
+            clearAnimation();
+            
+            // Mark start and goal
+            markNode(start, 'node-start');
+            markNode(goal, 'node-goal');
+            
+            // Animate exploration
+            exploredNodes.forEach((node, index) => {
+                if (node !== start && node !== goal) {
+                    const timeout = setTimeout(() => {
+                        markNode(node, 'node-exploring');
+                        setTimeout(() => {
+                            if (node !== start && node !== goal && !pathNodes.includes(node)) {
+                                markNode(node, 'node-explored');
+                            }
+                        }, 400);
+                    }, index * 150);
+                    animationTimeouts.push(timeout);
+                }
+            });
+
+            // Animate path after exploration
+            const pathDelay = exploredNodes.length * 150 + 500;
+            const timeout = setTimeout(() => {
+                drawPath(pathNodes);
+            }, pathDelay);
+            animationTimeouts.push(timeout);
+        }
+
+        function drawPath(pathNodes) {
+            const svg = document.getElementById('map-svg');
+            
+            // Draw path edges
+            for (let i = 0; i < pathNodes.length - 1; i++) {
+                const from = pathNodes[i];
+                const to = pathNodes[i + 1];
+                
+                const fromCoords = districts[from].coords;
+                const toCoords = districts[to].coords;
+                
+                const [x1, y1] = project(...fromCoords);
+                const [x2, y2] = project(...toCoords);
+                
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', x1);
+                line.setAttribute('y1', y1);
+                line.setAttribute('x2', x2);
+                line.setAttribute('y2', y2);
+                line.setAttribute('class', 'edge-path');
+                line.style.animationDelay = `${i * 0.1}s`;
+                svg.insertBefore(line, svg.firstChild.nextSibling);
+            }
+            
+            // Mark path nodes
+            pathNodes.forEach((node, index) => {
+                const timeout = setTimeout(() => {
+                    markNode(node, 'node-path');
+                }, index * 100);
+                animationTimeouts.push(timeout);
+            });
+            
+            // Re-mark start and goal
+            setTimeout(() => {
+                markNode(pathNodes[0], 'node-start');
+                markNode(pathNodes[pathNodes.length - 1], 'node-goal');
+            }, pathNodes.length * 100 + 100);
+        }
+
+        function executeSearch() {
+            const algorithm = document.getElementById('algorithm').value;
+            const start = document.getElementById('start').value;
+            const goal = document.getElementById('goal').value;
+
+            if (!start || !goal) {
+                alert('Please select both start and goal districts');
+                return;
+            }
+
+            if (start === goal) {
+                alert('Start and goal districts cannot be the same');
+                return;
+            }
+
+            clearAnimation();
+
+            const resultsDiv = document.getElementById('results-section');
+            resultsDiv.innerHTML = '<div class="loading">Searching for optimal path</div>';
+
+            const btn = document.querySelector('.search-btn');
+            btn.disabled = true;
+
+            // Reset map
+            drawMap();
+
+            // Simulate search
+            setTimeout(() => {
+                const result = performSearch(algorithm, start, goal);
+                displayResults(result, algorithm, start, goal);
+                animateSearch(result.explored, result.path, start, goal);
+                btn.disabled = false;
+            }, 500);
+        }
+
+        function performSearch(algorithm, start, goal) {
+            // BFS implementation
+            const queue = [[start, [start]]];
+            const visited = new Set([start]);
+            const explored = [];
+            
+            while (queue.length > 0) {
+                const [node, path] = queue.shift();
+                explored.push(node);
+                
+                if (node === goal) {
+                    return {
+                        path: path,
+                        explored: explored,
+                        cost: path.length - 1
+                    };
+                }
+                
+                const neighbors = districts[node].neighbors || [];
+                for (const neighbor of neighbors) {
+                    if (!visited.has(neighbor)) {
+                        visited.add(neighbor);
+                        queue.push([neighbor, [...path, neighbor]]);
+                    }
+                }
+            }
+            
+            return {
+                path: [],
+                explored: explored,
+                cost: Infinity
+            };
+        }
+
+        function displayResults(data, algorithm, start, goal) {
+            const resultsDiv = document.getElementById('results-section');
+            const algoName = document.getElementById('algorithm').options[document.getElementById('algorithm').selectedIndex].text;
+            
+            if (data.path && data.path.length > 0) {
+                const efficiency = ((data.path.length / data.explored.length) * 100).toFixed(1);
+                resultsDiv.innerHTML = `
+                    <div class="result-info">
+                        <h3>✅ Path Found Successfully!</h3>
+                        <div class="result-item"><strong>Algorithm:</strong> ${algoName}</div>
+                        <div class="result-item"><strong>Start:</strong> ${start}</div>
+                        <div class="result-item"><strong>Goal:</strong> ${goal}</div>
+                        <div class="result-item"><strong>Path Length:</strong> ${data.path.length} districts</div>
+                        <div class="result-item"><strong>Path Cost:</strong> ${data.cost} steps</div>
+                        <div class="result-item"><strong>Nodes Explored:</strong> ${data.explored.length}</div>
+                        <div class="result-item"><strong>Efficiency:</strong> ${efficiency}%</div>
+                        
+                        <div class="path-display">
+                            <strong>📍 Optimal Path</strong>
+                            <div>
+                                ${data.path.map(node => `<span class="path-step">${node}</span>`).join(' → ')}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-info">
+                        <h3>🔍 Exploration Sequence</h3>
+                        <div class="exploration-order">
+                            ${data.explored.map((node, idx) => `<span class="explored-node">${idx + 1}. ${node}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultsDiv.innerHTML = `
+                    <div class="result-info" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%); border-left-color: #ef4444;">
+                        <h3 style="color: #dc2626;">❌ No Path Found</h3>
+                        <div class="result-item">No path exists between ${start} and ${goal}</div>
+                        <div class="result-item"><strong>Nodes Explored:</strong> ${data.explored.length}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize
+        populateDistricts();
+        drawMap();
+
+        // Update algorithm info
+        document.getElementById('algorithm').addEventListener('change', function() {
+            document.getElementById('algoDescription').textContent = algoDescriptions[this.value];
+        });
+
+        // Set initial algorithm info
+        document.getElementById('algoDescription').textContent = algoDescriptions[document.getElementById('algorithm').value];
+    </script>
+</body>
+</html>

@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>N-Queens CSP</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+
+      h1 {
+        color: #667eea;
+        font-size: 2.5em;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .controls {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        padding: 20px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        border-radius: 15px;
+      }
+
+      .controls label {
+        font-size: 1em;
+        font-weight: 600;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .controls input {
+        width: 80px;
+        padding: 10px;
+        border-radius: 8px;
+        border: 2px solid #e0e0e0;
+        font-size: 1em;
+        transition: all 0.3s ease;
+      }
+
+      .controls input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .controls button {
+        padding: 12px 30px;
+        border-radius: 10px;
+        border: none;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        cursor: pointer;
+        font-size: 1em;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      }
+
+      .controls button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+      }
+
+      .controls button:active {
+        transform: translateY(0);
+      }
+
+      .meta {
+        text-align: center;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+      }
+
+      #status {
+        font-size: 1.1em;
+        color: #667eea;
+        font-weight: 600;
+        margin-bottom: 5px;
+      }
+
+      #stats {
+        font-size: 0.95em;
+        color: #666;
+      }
+
+      .board-wrap {
+        display: flex;
+        justify-content: center;
+        margin: 30px 0;
+      }
+
+      .board {
+        display: grid;
+        gap: 2px;
+        border-radius: 12px;
+        padding: 15px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      }
+
+      .cell {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+      }
+
+      .cell.light {
+        background: #ffffff;
+      }
+
+      .cell.dark {
+        background: #e8e8e8;
+      }
+
+      .queen {
+        font-size: 30px;
+        animation: placeQueen 0.3s ease-out;
+      }
+
+      @keyframes placeQueen {
+        from {
+          transform: scale(0) rotate(-180deg);
+          opacity: 0;
+        }
+        to {
+          transform: scale(1) rotate(0);
+          opacity: 1;
+        }
+      }
+
+      .nav {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        justify-content: center;
+        margin-top: 25px;
+      }
+
+      .nav button {
+        padding: 12px 24px;
+        border-radius: 10px;
+        border: none;
+        background: #667eea;
+        color: white;
+        cursor: pointer;
+        font-size: 1em;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .nav button:hover {
+        background: #764ba2;
+        transform: translateY(-2px);
+      }
+
+      .nav button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      #solIndex {
+        font-size: 1.1em;
+        font-weight: 600;
+        color: #667eea;
+        min-width: 80px;
+        text-align: center;
+      }
+
+      footer {
+        text-align: center;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 2px solid #f0f0f0;
+        color: #666;
+        font-size: 0.9em;
+      }
+
+      .back-home {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        padding: 10px 20px;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        text-decoration: none;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+      }
+
+      .back-home:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateX(-5px);
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 25px;
+        }
+
+        h1 {
+          font-size: 2em;
+        }
+
+        .cell {
+          width: 35px;
+          height: 35px;
+        }
+
+        .queen {
+          font-size: 22px;
+        }
+
+        .controls {
+          padding: 15px;
+        }
+
+        .back-home {
+          position: static;
+          display: inline-block;
+          margin-bottom: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a href="/" class="back-home">← Back to Hub</a>
+    
+    <div class="container">
+      <h1>♛ N-Queens CSP</h1>
+
+      <div class="controls">
+        <label>Board Size (N): <input type="number" id="boardSize" value="8" min="1" max="12" /></label>
+        <label>Queens (K): <input type="number" id="queens" value="8" min="1" /></label>
+        <label>Max Solutions: <input type="number" id="maxSolutions" value="10" min="1" /></label>
+        <button id="solveBtn">Solve CSP</button>
+      </div>
+
+      <div class="meta">
+        <div id="status">Ready to solve!</div>
+        <div id="stats"></div>
+      </div>
+
+      <div class="board-wrap"><div id="board" class="board"></div></div>
+
+      <div class="nav">
+        <button id="prevSol">◀ Previous</button>
+        <span id="solIndex">0 / 0</span>
+        <button id="nextSol">Next ▶</button>
+      </div>
+
+      <footer>Constraint Satisfaction Problem using Backtracking Algorithm</footer>
+    </div>
+
+    <script>
+      const boardEl = document.getElementById('board');
+      const statusEl = document.getElementById('status');
+      const statsEl = document.getElementById('stats');
+      const solIndexEl = document.getElementById('solIndex');
+      const prevBtn = document.getElementById('prevSol');
+      const nextBtn = document.getElementById('nextSol');
+      const solveBtn = document.getElementById('solveBtn');
+
+      let solutions = [], current = 0;
+
+      function buildGrid(N){
+        boardEl.innerHTML = '';
+        boardEl.style.gridTemplateColumns = `repeat(${N}, 50px)`;
+        for(let r=0;r<N;r++){
+          for(let c=0;c<N;c++){
+            const cell = document.createElement('div');
+            cell.className = 'cell ' + (((r+c)%2===0)?'light':'dark');
+            boardEl.appendChild(cell);
+          }
+        }
+      }
+
+      function renderSolution(sol, N){
+        buildGrid(N);
+        sol.forEach(([r,c])=>{
+          const idx = r*N + c;
+          boardEl.children[idx].innerHTML = '<span class="queen">♛</span>';
+        });
+      }
+
+      async function fetchSolutions(){
+        const N = +document.getElementById('boardSize').value;
+        const K = +document.getElementById('queens').value;
+        const maxS = +document.getElementById('maxSolutions').value || 10;
+        statusEl.textContent = 'Solving...';
+        statsEl.textContent = '';
+        solutions = []; current = 0;
+        prevBtn.disabled = true;
+        nextBtn.disabled = true;
+
+        try{
+          const res = await fetch('/api/nqueens/solve', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({board_size:N, queens:K, max_solutions:maxS})
+          });
+          const data = await res.json();
+          if(res.ok){
+            solutions = data.solutions || [];
+            statsEl.textContent = `Found ${data.solutions_found} solution${data.solutions_found !== 1 ? 's' : ''} in ${data.time_seconds.toFixed(3)}s`;
+            if(solutions.length>0){
+              renderSolution(solutions[0], N);
+              solIndexEl.textContent = `1 / ${solutions.length}`;
+              prevBtn.disabled = false;
+              nextBtn.disabled = false;
+            } else {
+              buildGrid(N);
+              solIndexEl.textContent = `0 / 0`;
+            }
+            statusEl.textContent = solutions.length > 0 ? 'Solutions found!' : 'No solutions found';
+          }else{
+            statusEl.textContent = data.error || 'Error occurred';
+          }
+        }catch(e){
+          statusEl.textContent = 'Server error - please try again';
+          console.error(e);
+        }
+      }
+
+      solveBtn.addEventListener('click', fetchSolutions);
+      prevBtn.addEventListener('click', ()=>{
+        if(!solutions.length) return;
+        current = (current - 1 + solutions.length) % solutions.length;
+        renderSolution(solutions[current], +document.getElementById('boardSize').value);
+        solIndexEl.textContent = `${current+1} / ${solutions.length}`;
+      });
+      nextBtn.addEventListener('click', ()=>{
+        if(!solutions.length) return;
+        current = (current + 1) % solutions.length;
+        renderSolution(solutions[current], +document.getElementById('boardSize').value);
+        solIndexEl.textContent = `${current+1} / ${solutions.length}`;
+      });
+
+      buildGrid(+document.getElementById('boardSize').value);
+    </script>
+  </body>
+</html>

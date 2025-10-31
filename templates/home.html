@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Algorithms Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            padding: 60px 20px;
+        }
+
+        .header h1 {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.95;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+            padding: 0 20px;
+        }
+
+        .project-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .project-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+        }
+
+        .project-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .project-card h2 {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .project-card p {
+            color: #666;
+            line-height: 1.6;
+            text-align: center;
+            font-size: 1.05em;
+        }
+
+        .tech-stack {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tech-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 40px 20px 20px;
+            margin-top: 60px;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5em;
+            }
+
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .project-card {
+                padding: 30px;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .project-card {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        .project-card:nth-child(1) { animation-delay: 0.1s; }
+        .project-card:nth-child(2) { animation-delay: 0.2s; }
+        .project-card:nth-child(3) { animation-delay: 0.3s; }
+        .project-card:nth-child(4) { animation-delay: 0.4s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Algorithms Hub</h1>
+            <p>Explore interactive demonstrations of classic AI algorithms and problem-solving techniques</p>
+        </div>
+
+        <div class="projects-grid">
+            <a href="/puzzle" class="project-card">
+                <div class="project-icon">🧩</div>
+                <h2>8-Puzzle Solver</h2>
+                <p>Solve the classic 8-puzzle game using A* search algorithm with Manhattan and Misplaced tile heuristics. Watch the AI find optimal solutions!</p>
+                <div class="tech-stack">
+                    <span class="tech-badge">A* Algorithm</span>
+                    <span class="tech-badge">Heuristics</span>
+                    <span class="tech-badge">Game AI</span>
+                </div>
+            </a>
+
+            <a href="/classifier" class="project-card">
+                <div class="project-icon">🖼️</div>
+                <h2>Image Classifier</h2>
+                <p>Upload images and get instant classification using GoogLeNet deep learning model. Recognizes 1000+ object categories with confidence scores.</p>
+                <div class="tech-stack">
+                    <span class="tech-badge">Deep Learning</span>
+                    <span class="tech-badge">PyTorch</span>
+                    <span class="tech-badge">GoogLeNet</span>
+                </div>
+            </a>
+
+            <a href="/nqueens" class="project-card">
+                <div class="project-icon">♛</div>
+                <h2>N-Queens CSP</h2>
+                <h>Visualize solutions to the N-Queens problem using Constraint Satisfaction Problem techniques. Place K queens on an N×N board without conflicts.</p>
+                <div class="tech-stack">
+                    <span class="tech-badge">CSP</span>
+                    <span class="tech-badge">Backtracking</span>
+                    <span class="tech-badge">Combinatorics</span>
+                </div>
+            </a>
+
+            <a href="/pathfinding" class="project-card">
+                <div class="project-icon">🗺️</div>
+                <h2>Pathfinding Algorithms</h2>
+                <p>Compare 8 different search algorithms (BFS, DFS, UCS, A*, Greedy, etc.) on Tamil Nadu district map. Visualize exploration patterns and paths.</p>
+                <div class="tech-stack">
+                    <span class="tech-badge">BFS/DFS</span>
+                    <span class="tech-badge">A* Search</span>
+                    <span class="tech-badge">Visualization</span>
+                </div>
+            </a>
+        </div>
+
+        <div class="footer">
+            <p>Built with Flask, Python, and Modern Web Technologies</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">© 2025 AI Algorithms Hub</p>
+        </div>
+    </div>
+</body>
+</html>

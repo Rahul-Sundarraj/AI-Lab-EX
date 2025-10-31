@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8-Puzzle Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 30px auto;
+            max-width: 400px;
+            aspect-ratio: 1;
+            position: relative;
+        }
+
+        .tile {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 3em;
+            font-weight: bold;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: grab;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            user-select: none;
+            position: relative;
+            touch-action: none;
+        }
+
+        .tile:hover:not(.blank):not(.dragging) {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .tile:active:not(.blank) {
+            cursor: grabbing;
+        }
+
+        .tile.blank {
+            background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+            cursor: default;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+            border: 2px dashed #ccc;
+        }
+
+        .tile.dragging {
+            opacity: 0.7;
+            cursor: grabbing;
+            transform: scale(1.1) rotate(5deg);
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .tile.valid-move {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .tile.valid-move::after {
+            content: '↔';
+            position: absolute;
+            top: 5px;
+            right: 8px;
+            font-size: 0.4em;
+            opacity: 0.7;
+            animation: bounce 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            }
+            50% { 
+                box-shadow: 0 4px 25px rgba(102, 126, 234, 0.8), 0 0 20px rgba(102, 126, 234, 0.4);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        .tile.animating {
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .tile.solving {
+            animation: solving 0.5s ease-in-out;
+        }
+
+        @keyframes solving {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(1.15) rotate(-5deg); }
+            75% { transform: scale(1.15) rotate(5deg); }
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #333;
+            min-height: 30px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .status.success {
+            color: #4caf50;
+            font-weight: bold;
+            animation: celebrate 0.6s ease-in-out;
+        }
+
+        @keyframes celebrate {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(1.1) rotate(-2deg); }
+            75% { transform: scale(1.1) rotate(2deg); }
+        }
+
+        .status.error {
+            color: #f44336;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 400px;
+            text-align: center;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-content h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 1em;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+        }
+
+        .solve-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .moves-counter {
+            text-align: center;
+            font-size: 1.1em;
+            color: #666;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .back-home {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-home:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-5px);
+        }
+
+        .drop-zone {
+            position: absolute;
+            border: 3px dashed #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 15px;
+            pointer-events: all;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+        }
+
+        .drop-zone.active {
+            opacity: 1;
+            animation: dropZonePulse 1s ease-in-out infinite;
+        }
+
+        @keyframes dropZonePulse {
+            0%, 100% { background: rgba(102, 126, 234, 0.1); }
+            50% { background: rgba(102, 126, 234, 0.3); }
+        }
+
+        @media (max-width: 768px) {
+            .back-home {
+                position: static;
+                display: inline-block;
+                margin-bottom: 20px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .tile {
+                font-size: 2em;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="/" class="back-home">← Back to Hub</a>
+
+    <div class="container">
+        <h1>8-Puzzle Game</h1>
+        <div class="subtitle">🎯 Drag and drop tiles to solve • Valid moves glow</div>
+        
+        <div class="game-board" id="gameBoard"></div>
+        
+        <div class="moves-counter" id="movesCounter">Moves: 0</div>
+        
+        <div class="controls">
+            <button onclick="shuffle()">🔀 Shuffle</button>
+            <button onclick="showSolveModal()">🤖 Auto Solve</button>
+            <button onclick="reset()">↺ Reset</button>
+        </div>
+        
+        <div class="status" id="status"></div>
+    </div>
+
+    <div class="modal" id="solveModal">
+        <div class="modal-content">
+            <h2>Choose Solving Algorithm</h2>
+            <p>Select heuristic function:</p>
+            <div class="solve-options">
+                <button onclick="solve('manhattan')">📏 Manhattan</button>
+                <button onclick="solve('misplaced')">🎯 Misplaced</button>
+            </div>
+            <div class="modal-buttons">
+                <button onclick="closeSolveModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/puzzle';
+        let currentState = [1, 2, 3, 4, 5, 6, 7, 8, 0];
+        let moveCount = 0;
+        let isAnimating = false;
+        let draggedTile = null;
+        let draggedElement = null;
+
+        function renderBoard() {
+            const board = document.getElementById('gameBoard');
+            board.innerHTML = '';
+            
+            const zeroIndex = currentState.indexOf(0);
+            const validMoves = getValidMoves(zeroIndex);
+            
+            currentState.forEach((tile, index) => {
+                const tileDiv = document.createElement('div');
+                tileDiv.className = 'tile';
+                tileDiv.dataset.index = index;
+                tileDiv.dataset.value = tile;
+                
+                if (tile === 0) {
+                    tileDiv.classList.add('blank');
+                } else {
+                    tileDiv.textContent = tile;
+                    if (validMoves.includes(index)) {
+                        tileDiv.classList.add('valid-move');
+                        tileDiv.draggable = true;
+                    }
+                    
+                    // Drag and drop event listeners
+                    tileDiv.addEventListener('dragstart', handleDragStart);
+                    tileDiv.addEventListener('dragend', handleDragEnd);
+                    
+                    // Touch events for mobile
+                    tileDiv.addEventListener('touchstart', handleTouchStart, {passive: false});
+                    tileDiv.addEventListener('touchmove', handleTouchMove, {passive: false});
+                    tileDiv.addEventListener('touchend', handleTouchEnd);
+                    
+                    // Click as fallback
+                    tileDiv.addEventListener('click', () => moveTile(tile));
+                }
+                
+                board.appendChild(tileDiv);
+            });
+            
+            document.getElementById('movesCounter').textContent = `Moves: ${moveCount}`;
+        }
+
+        function getValidMoves(zeroIndex) {
+            const row = Math.floor(zeroIndex / 3);
+            const col = zeroIndex % 3;
+            const valid = [];
+            
+            if (row > 0) valid.push(zeroIndex - 3); // up
+            if (row < 2) valid.push(zeroIndex + 3); // down
+            if (col > 0) valid.push(zeroIndex - 1); // left
+            if (col < 2) valid.push(zeroIndex + 1); // right
+            
+            return valid;
+        }
+
+        function handleDragStart(e) {
+            if (isAnimating) {
+                e.preventDefault();
+                return;
+            }
+            
+            draggedTile = parseInt(e.target.dataset.value);
+            draggedElement = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', draggedTile);
+            
+            // Show drop zone
+            showDropZone();
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            hideDropZone();
+            draggedTile = null;
+            draggedElement = null;
+        }
+
+        function showDropZone() {
+            const board = document.getElementById('gameBoard');
+            const zeroIndex = currentState.indexOf(0);
+            const tiles = Array.from(board.children).filter(el => el.classList.contains('tile'));
+            const blankTile = tiles[zeroIndex];
+            
+            if (!blankTile) return;
+            
+            const dropZone = document.createElement('div');
+            dropZone.className = 'drop-zone active';
+            dropZone.id = 'dropZone';
+            
+            const rect = blankTile.getBoundingClientRect();
+            const boardRect = board.getBoundingClientRect();
+            
+            dropZone.style.position = 'absolute';
+            dropZone.style.left = (rect.left - boardRect.left) + 'px';
+            dropZone.style.top = (rect.top - boardRect.top) + 'px';
+            dropZone.style.width = rect.width + 'px';
+            dropZone.style.height = rect.height + 'px';
+            dropZone.style.pointerEvents = 'all';
+            
+            // Add drop events
+            dropZone.addEventListener('dragover', handleDragOver);
+            dropZone.addEventListener('drop', handleDrop);
+            dropZone.addEventListener('dragleave', handleDragLeave);
+            dropZone.addEventListener('dragenter', handleDragEnter);
+            
+            board.appendChild(dropZone);
+        }
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+        
+        function handleDragEnter(e) {
+            e.preventDefault();
+        }
+        
+        function handleDragLeave(e) {
+            // Optional: Add visual feedback
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (draggedTile) {
+                moveTile(draggedTile);
+            }
+        }
+
+        function hideDropZone() {
+            const dropZone = document.getElementById('dropZone');
+            if (dropZone) {
+                dropZone.remove();
+            }
+        }
+
+        // Touch events for mobile
+        let touchStartX, touchStartY, touchElement;
+
+        function handleTouchStart(e) {
+            if (isAnimating) {
+                e.preventDefault();
+                return;
+            }
+            
+            touchElement = e.target;
+            draggedTile = parseInt(e.target.dataset.value);
+            
+            const touch = e.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            
+            e.target.classList.add('dragging');
+            showDropZone();
+            e.preventDefault();
+        }
+
+        function handleTouchMove(e) {
+            if (!touchElement) return;
+            e.preventDefault();
+        }
+
+        function handleTouchEnd(e) {
+            if (!touchElement) return;
+            
+            touchElement.classList.remove('dragging');
+            const touch = e.changedTouches[0];
+            const deltaX = touch.clientX - touchStartX;
+            const deltaY = touch.clientY - touchStartY;
+            
+            // Determine swipe direction
+            if (Math.abs(deltaX) > 30 || Math.abs(deltaY) > 30) {
+                moveTile(draggedTile);
+            }
+            
+            hideDropZone();
+            touchElement = null;
+            e.preventDefault();
+        }
+
+        async function moveTile(tile) {
+            if (isAnimating) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/move`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ state: currentState, tile })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Animate the move
+                    const tileIndex = currentState.indexOf(tile);
+                    const board = document.getElementById('gameBoard');
+                    const tileElement = board.children[tileIndex];
+                    tileElement.classList.add('animating');
+                    
+                    currentState = data.state;
+                    moveCount++;
+                    
+                    setTimeout(() => {
+                        renderBoard();
+                        
+                        if (data.solved) {
+                            celebrateSolve();
+                        }
+                    }, 200);
+                } else {
+                    showStatus(data.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Error connecting to server', 'error');
+            }
+        }
+
+        function celebrateSolve() {
+            showStatus('🎉 Congratulations! Puzzle Solved! 🎉', 'success');
+            
+            // Confetti effect on tiles
+            const board = document.getElementById('gameBoard');
+            const tiles = board.querySelectorAll('.tile:not(.blank)');
+            tiles.forEach((tile, index) => {
+                setTimeout(() => {
+                    tile.style.animation = 'celebrate 0.6s ease-in-out';
+                }, index * 50);
+            });
+        }
+
+        async function shuffle() {
+            if (isAnimating) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/shuffle`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ steps: 30 })
+                });
+                
+                const data = await response.json();
+                currentState = data.state;
+                moveCount = 0;
+                renderBoard();
+                showStatus('🔀 Board shuffled! Start solving!', '');
+            } catch (error) {
+                showStatus('Error connecting to server', 'error');
+            }
+        }
+
+        async function reset() {
+            if (isAnimating) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/reset`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                currentState = data.state;
+                moveCount = 0;
+                renderBoard();
+                showStatus('↺ Board reset to goal state', '');
+            } catch (error) {
+                showStatus('Error connecting to server', 'error');
+            }
+        }
+
+        function showSolveModal() {
+            document.getElementById('solveModal').classList.add('active');
+        }
+
+        function closeSolveModal() {
+            document.getElementById('solveModal').classList.remove('active');
+        }
+
+        async function solve(heuristic) {
+            closeSolveModal();
+            
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            showStatus('🤖 AI is thinking...', '');
+            
+            try {
+                const response = await fetch(`${API_URL}/solve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ state: currentState, heuristic })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showStatus(`✨ Solution found in ${data.moves} moves! Animating...`, 'success');
+                    await animateSolution(data.path);
+                } else {
+                    showStatus(data.error, 'error');
+                    isAnimating = false;
+                }
+            } catch (error) {
+                showStatus('Error connecting to server', 'error');
+                isAnimating = false;
+            }
+        }
+
+        async function animateSolution(path) {
+            for (let i = 1; i < path.length; i++) {
+                await new Promise(resolve => setTimeout(resolve, 400));
+                
+                // Add solving animation to all tiles
+                const board = document.getElementById('gameBoard');
+                const tiles = board.querySelectorAll('.tile:not(.blank)');
+                tiles.forEach(tile => tile.classList.add('solving'));
+                
+                currentState = path[i];
+                moveCount++;
+                renderBoard();
+            }
+            
+            celebrateSolve();
+            isAnimating = false;
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + type;
+            
+            if (message && type !== 'success') {
+                setTimeout(() => {
+                    status.textContent = '';
+                    status.className = 'status';
+                }, 3000);
+            }
+        }
+
+        // Initialize board
+        renderBoard();
+    </script>
+</body>
+</html>
